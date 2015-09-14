@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import math
 import numpy
-from collections import Counter, defauldict
+from collections import Counter, defaultdict
 from functools import partial
 
 def entropy_function(p):
@@ -21,9 +21,9 @@ def partition_entropy(inputs):
     return entropy(class_probabilities)
 
 def group_by(inputs,attribute):
-    groups = defauldict(list)
+    groups = defaultdict(list)
     for input_i in inputs:
-        groups[input_i[attribute]].append(input_i)
+        groups[input_i[0][attribute]].append(input_i)
     return groups
 
 def partition_entropy_by(inputs, attribute):
@@ -55,7 +55,7 @@ def build_decision_tree_d3(inputs,attribute_candidates=None):
     if num_false == 0:
         return True
 
-    if len(attribute_candidates) == 0 :
+    if attribute_candidates == None :
         return num_true>=num_false
 
     partition_entropy_by_candidate = partial(partition_entropy_by,inputs)
@@ -63,8 +63,12 @@ def build_decision_tree_d3(inputs,attribute_candidates=None):
     best_partition = min(attribute_candidates,key =
             partition_entropy_by_candidate) 
     groups = group_by(inputs, best_partition)
+
+    attribute_candidates = [attribute for attribute in attribute_candidates if
+            attribute != best_partition]
     
-    subtrees = {attribute_value: build_decision_tree_d3(partition) for
+    subtrees = {attribute_value: build_decision_tree_d3(partition,
+        attribute_candidates) for
         attribute_value,partition in groups.iteritems()} 
 
     subtrees[None] = num_true>=num_false
@@ -89,4 +93,11 @@ if __name__ == "__main__":
         ({'level':'Mid','lang':'Java','tweets':'yes','phd':'no'},      True),
         ({'level':'Junior','lang':'Python','tweets':'no','phd':'yes'},False)
     ]
-    print build_decision_tree_d3(inputs)
+
+    attribute_candidates = inputs[0][0].keys()
+    print attribute_candidates
+    tree =  build_decision_tree_d3(inputs, attribute_candidates)
+    print classify(tree, { "level" : "Junior",
+        "lang" : "Java",
+        "tweets" : "yes",
+        "phd" : "no"} )
